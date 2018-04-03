@@ -9,7 +9,7 @@ from tweepy.streaming import StreamListener
 import pytoml as toml
 
 
-global configFile = 'apis.toml'
+configFile = 'apis.toml'
 
 class MyListener(StreamListener):
 
@@ -37,15 +37,16 @@ def main():
     if len(sys.argv) < 3:
         print("Error! Ussage: %s <outputfile> <keyword [keyword [..]]>" % sys.argv[0])
     else:
-        downloadTweets(sys.argv[2:], sys.argv[1]);
+        apiConfig = loadConfig(configFile)
+        downloadTweets(apiConfig, sys.argv[2:], sys.argv[1]);
 
 def downloadTweets(config, filters, outputFile):
     # Auth and api access
 
-    consumer_key = config.consumer_key
-    consumer_secret = config.consumer_secret
-    access_token = config.access_token
-    access_secret = config.access_secret
+    consumer_key = config['consumer_key']
+    consumer_secret = config['consumer_secret']
+    access_token = config['access_token']
+    access_secret = config['access_secret']
 
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_secret)
