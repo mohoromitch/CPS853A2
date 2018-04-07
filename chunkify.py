@@ -1,6 +1,41 @@
+#! /usr/bin/env python3
 import sys
 
-# Takes the form $chunkify <filename> <lines-per-chunk>
+class ChunkWriter:
+    def __init__(self, baseFilename, chunkLength):
+        self.baseFilename = baseFilename
+        self.chunkLength = chunkLength
+        self.__nameGen = self.__nameGenerator(baseFilename)
+        self.__currentFile = None
+        self.__currentCount = 0
+
+    def write(self, line):
+        if self.__currentFile == None:
+            self.__currentFile = open(next(self.__nameGen), 'w')
+        self.__currentFile.write(line)
+        self.__currentCount += 1
+        if self.__currentCount >= self.chunkLength:
+            self.__currentFile.close()
+            self.__currentFile = open(next(self.__nameGen), 'w')
+            self.__currentCount = 0
+
+    def purge(self):
+        if self.__currentFile:
+            self.__currentFile.close()
+            self.__currentFile = None
+        self.__currentCount = 0
+
+    def __enter__(self):
+        return lambda l: self.write(l)
+
+    def __exit__(self, type, value, traceback):
+        self.purge()
+
+    def __nameGenerator(self, baseName):
+        count = 0
+        while(True):
+            yield '%s-%d' % (baseName, count)
+            count += 1
 
 
 def __main():
@@ -11,25 +46,10 @@ def __main():
     chunkFile(filename, chunkLen)
 
 def chunkFile(filename, chunkLen):
-    nameGenerator = __nameGenerator(filename)
-    with open(filename, 'r') as source:
-        lineCount = 0
-        cFile = open(next(nameGenerator), 'w')
-        for line in source:
-            if (lineCount >= chunkLen):
-                lineCount = 0;
-                cFile.close()
-                cFile = open(next(nameGenerator), 'w')
-            cFile.write(line)
-            lineCount += 1
-        cFile.close()
-
-def __nameGenerator(baseName):
-    count = 0
-    while(True):
-        yield '%s-%d' % (baseName, count)
-        count += 1
-
+    with ChunkWriter(filename, chunkLen) as write:
+        with open(filename, 'r') as source:
+            for line in source:
+                write(line)
 
 if __name__ == '__main__':
     __main()
