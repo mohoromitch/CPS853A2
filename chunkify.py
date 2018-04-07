@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 import sys
+import argparse
+from os import path
 
 class ChunkWriter:
     def __init__(self, baseFilename, chunkLength):
@@ -39,14 +41,18 @@ class ChunkWriter:
 
 
 def __main():
-    if len(sys.argv) < 3:
-        print('INVALID! Ussage: %s <filename> <lines-per-chunk> [output-path]' % sys.argv[0])
-    filename = sys.argv[1]
-    chunkLen = int(sys.argv[2])
-    chunkFile(filename, chunkLen)
+    parser = argparse.ArgumentParser(usage='%(prog)s <source> <size> [options...]', epilog="Like month old milk ;)", description='Text file chunker.')
+    parser.add_argument('sourceFile', help='File to chunk')
+    parser.add_argument('chunkSize', type=int, help='Number of lines per chunk')
+    parser.add_argument('-d', default='./', help='Where to dump output files')
+    parsed = parser.parse_args(sys.argv[1:])
+    if not path.exists(parsed.d):
+        exit('Error! %s is not a valid dir.' % parsed.d)
+    chunkFile(parsed.sourceFile, parsed.chunkSize, outPath=parsed.d)
 
-def chunkFile(filename, chunkLen):
-    with ChunkWriter(filename, chunkLen) as write:
+def chunkFile(filename, chunkLen, outPath='./'):
+    baseName = path.join(path.abspath(outPath), path.basename(filename))
+    with ChunkWriter(baseName, chunkLen) as write:
         with open(filename, 'r') as source:
             for line in source:
                 write(line)
