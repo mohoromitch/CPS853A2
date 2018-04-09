@@ -1,12 +1,12 @@
-
 from argparse import ArgumentParser
 from os import path
 import sys
 import csv
 import json
+from datetime import datetime
 
 # utc_offset, location, followers_count, verified, lang from user
-column_names = ['created_at', 'text', 'reply_count', 'retweet_count', 'favorite_count', 'utc_offset', 'location', 'followers_count', 'verified', 'lang', 'geo', 'coordinates', 'place']
+column_names = ['created_at', 'text', 'reply_count', 'retweet_count', 'favorite_count', 'utc_offset', 'location', 'followers_count', 'verified', 'lang', 'geo', 'coordinates', 'place', 'epoch']
 user_colums = ['utc_offset', 'location', 'followers_count', 'verified']
 
 def filesToCsv(files, outputDir='./'):
@@ -24,7 +24,17 @@ def filesToCsv(files, outputDir='./'):
                     except:
                         pass
                     for col in column_names:
-                        if col in user_colums:
+                        if col == 'epoch':
+                            try:
+                                pattern = r"%a %b %d %H:%M:%S %z %Y"
+                                t = datetime.strptime(j['created_at'], pattern).timestamp()
+
+                                data['epoch'] = t
+                                if 'utc_offset' in userData:
+                                    data['epoch'] += int(userData['utc_offset']) * 60;
+                            except:
+                                pass
+                        elif col in user_colums:
                             try:
                                 data[col] = userData[col]
                             except:
